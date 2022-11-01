@@ -1,0 +1,5 @@
+chart
+models/*/*
+!models/*/data.csv
+output/*
+!output/.gitkeep
