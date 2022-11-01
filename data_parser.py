@@ -31,8 +31,21 @@ class Parser():
             # 載入新資料
             df = pd.read_csv(self.input_path)
 
-            # 合併USB2.0和USB3.0
-            df["產品系列"] = df["產品系列"].replace("USB2.0(TYPE C)", "USB2.0").replace("USB3.0(TYPE C)", "USB3.0").replace("USB3.0(主動線)", "USB3.0").replace("其他", "other")
+            # 合併GIGE、USB2.0和USB3.0，確認產品名稱
+            df["產品系列"] = df["產品系列"].str.upper()
+            series = ["GIGE", "USB2.0", "USB3.0", "其他", "UNKNOWN"]
+            for i in range(len(df)):
+                flag = 0
+                for s in series:
+                    if s in df.iloc[i, 1]:
+                        df.iloc[i, 1] = s
+                        flag = 1
+                        break
+                    
+                if flag == 0:
+                    df.iloc[i, 1] = "UNKNOWN"
+
+            df["產品系列"] = df["產品系列"].replace("其他", "other").replace("UNKNOWN", "Unknown")
 
             # 各產品每週總計
             df["week"] = pd.DatetimeIndex(df["預估交期"]).to_period("W").to_timestamp()
