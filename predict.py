@@ -146,6 +146,7 @@ class Predict():
         for year in g.size().index:
             result = g.get_group(year)
             result = result.drop("year", axis = 1)
+            col = "其他" if col == "other" else col
             result.columns = [col]
             result = result.T
             result = result.reset_index()

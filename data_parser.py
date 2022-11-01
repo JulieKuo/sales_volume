@@ -32,11 +32,11 @@ class Parser():
             df = pd.read_csv(self.input_path)
 
             # 合併USB2.0和USB3.0
-            df["產品系列"] = df["產品系列"].replace("USB2.0(TYPE C)", "USB2.0").replace("USB3.0(TYPE C)", "USB3.0").replace("USB3.0(Active)", "USB3.0").replace("其他", "other")
+            df["產品系列"] = df["產品系列"].replace("USB2.0(TYPE C)", "USB2.0").replace("USB3.0(TYPE C)", "USB3.0").replace("USB3.0(主動線)", "USB3.0").replace("其他", "other")
 
             # 各產品每週總計
-            df["week"] = pd.DatetimeIndex(df["銷貨日期"]).to_period("W").to_timestamp()
-            df_g = df.groupby(["week", "產品系列"])["銷貨數量"].sum()
+            df["week"] = pd.DatetimeIndex(df["預估交期"]).to_period("W").to_timestamp()
+            df_g = df.groupby(["week", "產品系列"])["數量"].sum()
             df_g = df_g.unstack()
             df_g = df_g.reset_index()
 
