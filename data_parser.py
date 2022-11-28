@@ -1,0 +1,100 @@
+from log_config import Log
+import pandas as pd
+from traceback import format_exc
+import os, sys, base64, json
+
+
+log = Log()
+
+
+
+class Parser():
+    def __init__(self, model_path, log_path):
+        self.input_path = os.path.join(model_path, "data.csv")
+        self.output_path = os.path.join(model_path, "parser.csv")
+        self.origin_path = os.path.join(model_path, "..\\origin_data.csv")  
+        
+
+        global logging
+        logging = log.set_log(filepath = log_path, level = 2, freq = "D", interval = 50)
+
+
+        
+    def main(self):
+        try:
+            logging.info("========== Data parsing. ==========")
+            
+            # 載入歷史資料
+            df0 = pd.read_csv(self.origin_path)
+            df0["week"] = pd.to_datetime(df0["week"])
+            
+            # 載入新資料
+            df = pd.read_csv(self.input_path)
+
+            # 合併GIGE、USB2.0和USB3.0，確認產品名稱
+            df["產品系列"] = df["產品系列"].str.upper()
+            series = ["GIGE", "USB2.0", "USB3.0", "其他", "UNKNOWN"]
+            for i in range(len(df)):
+                flag = 0
+                for s in series:
+                    if s in df.iloc[i, 1]:
+                        df.iloc[i, 1] = s
+                        flag = 1
+                        
+                        break
+                    
+                if flag == 0:
+                    df.iloc[i, 1] = "UNKNOWN"
+
+            df["產品系列"] = df["產品系列"].replace("其他", "other").replace("UNKNOWN", "Unknown")
+
+            # 各產品每週總計
+            df["week"] = pd.DatetimeIndex(df["預估交期"]).to_period("W").to_timestamp()
+            df_g = df.groupby(["week", "產品系列"])["數量"].sum()
+            df_g = df_g.unstack()
+            df_g = df_g.reset_index()
+
+            # 合併歷史及新資料
+            df_g = pd.concat([df0, df_g])
+            df_keep = df_g["week"].duplicated(keep = "last")
+            df_g = df_g[~df_keep]
+            df_g = df_g.sort_values("week")
+            df_g = df_g.set_index("week")
+
+
+            # 填補缺失時間
+            pdates = pd.date_range(start = df_g.index[0], end = df_g.index[-1], freq = "W-MON")
+            df_g = df_g.reindex(pdates)
+            df_g = df_g.reset_index()
+            df_g =df_g.rename(columns = {"index": "week"})
+
+            #save
+            df_g.to_csv(self.origin_path, index = False)
+            df_g.to_csv(self.output_path, index = False)
+
+        except:
+            logging.error(format_exc())
+            df0.to_csv(self.output_path, index = False)
+
+        finally:
+            log.shutdown()
+
+
+
+if __name__ == '__main__':
+
+    if len(sys.argv) > 1: 
+        input_ = sys.argv[1]
+        input_ = base64.b64decode(input_).decode('utf-8')
+
+        input_ = json.loads(input_)
+    else:
+        print("Input parameter error.")
+
+
+    model_path = input_["model_path"]
+    log_path = input_["log_path"]
+
+    
+    parser = Parser(model_path, log_path)
+    output_path = parser.main()
