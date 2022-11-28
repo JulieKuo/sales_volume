@@ -27,6 +27,7 @@ class Parser():
             # 載入歷史資料
             df0 = pd.read_csv(self.origin_path)
             df0["week"] = pd.to_datetime(df0["week"])
+            df0 = df0.drop_duplicates()
             
             # 載入新資料
             df = pd.read_csv(self.input_path)
@@ -40,7 +41,6 @@ class Parser():
                     if s in df.iloc[i, 1]:
                         df.iloc[i, 1] = s
                         flag = 1
-                        
                         break
                     
                 if flag == 0:
