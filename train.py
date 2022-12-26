@@ -91,14 +91,14 @@ class Model():
         bins = []
         for i in range(digit2, digit1):
             if i >= 4: # 超過10000，每一個進位區間中多切四份，避免區間過大
-                bins1 = np.linspace(10**i, 10**(i+1), 5)#+(i-4)*2
+                bins1 = np.linspace(10**i, 10**(i+1), 5)
                 if i > 4:
                     bins1 = np.delete(bins1, 0) # 刪除重複的數字
                 bins.extend(bins1)
             else:
                 bins.append(10**i)
                 
-        bins[0] = bins[0] - 1
+        bins[0] = bins[0] - 2
 
 
         # 切割

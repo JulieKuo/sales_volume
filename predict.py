@@ -56,10 +56,10 @@ class Predict():
             series.iloc[i, 3] = cat.loc[pred]['cut'].right
             series.iloc[i, 4] = medain[pred]
 
-            if np.isnan(std[pred]):
-                series.iloc[i, 5] = 0
+            if np.isnan(std[pred]) or (std[pred] == 0):
+                series.iloc[i, 5] = np.random.randint(5, 10)
             else:
-                series.iloc[i, 5] = round(np.random.normal(scale = std[pred]))
+                series.iloc[i, 5] = round(np.random.normal(scale = std[pred]*0.5))
 
             series.iloc[i, 6] = series.iloc[i, 4] + series.iloc[i, 5]
             if (series.iloc[i, 6] < series.iloc[i, 2]):
@@ -113,10 +113,10 @@ class Predict():
             series.iloc[-1, 3] = cat.loc[pred[0]]['cut'].right
             series.iloc[-1, 4] = medain[pred[0]]
 
-            if np.isnan(std[pred[0]]):
-                series.iloc[-1, 5] = 0
+            if np.isnan(std[pred[0]]) or (std[pred[0]] == 0):
+                series.iloc[-1, 5] = np.random.randint(5, 10)
             else:
-                series.iloc[-1, 5] = round(np.random.normal(scale = std[pred[0]]))
+                series.iloc[-1, 5] = round(np.random.normal(scale = std[pred[0]]*0.5))
             
             series.iloc[-1, 6] = series.iloc[-1, 4] + series.iloc[-1, 5]
             if (series.iloc[-1, 6] < series.iloc[-1, 2]):

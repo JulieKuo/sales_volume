@@ -27,10 +27,11 @@ class Parser():
             # 載入歷史資料
             df0 = pd.read_csv(self.origin_path)
             df0["week"] = pd.to_datetime(df0["week"])
-            df0 = df0.drop_duplicates()
+            df0 = df0.set_index("week")
             
             # 載入新資料
             df = pd.read_csv(self.input_path)
+            df = df.drop_duplicates()
 
             # 合併GIGE、USB2.0和USB3.0，確認產品名稱
             df["產品系列"] = df["產品系列"].str.upper()
@@ -52,21 +53,32 @@ class Parser():
             df["week"] = pd.DatetimeIndex(df["預估交期"]).to_period("W").to_timestamp()
             df_g = df.groupby(["week", "產品系列"])["數量"].sum()
             df_g = df_g.unstack()
-            df_g = df_g.reset_index()
+            df_g = df_g.sort_index()
 
             # 合併歷史及新資料
-            df_g = pd.concat([df0, df_g])
-            df_keep = df_g["week"].duplicated(keep = "last")
-            df_g = df_g[~df_keep]
-            df_g = df_g.sort_values("week")
-            df_g = df_g.set_index("week")
+            flag = 1
+            for idx in df_g.index:
+                if idx <= df0.index[-1]: # 舊資料，取代
+                    for col in df_g.columns:
+                        if not pd.isna(df_g.loc[idx, col]):
+                            df0.loc[idx, col] = df_g.loc[idx, col]
+                else: # 新資料，合併
+                    df_g = pd.concat([df0, df_g.loc[idx:]])
+                    flag = 0
+                    break
 
+            if flag:
+                df_g = df0.copy()
+                
 
             # 填補缺失時間
             pdates = pd.date_range(start = df_g.index[0], end = df_g.index[-1], freq = "W-MON")
             df_g = df_g.reindex(pdates)
             df_g = df_g.reset_index()
             df_g =df_g.rename(columns = {"index": "week"})
+
+            # 數量單位整數
+            df_g.iloc[:, 1:] = df_g.iloc[:, 1:].astype(int)
 
             #save
             df_g.to_csv(self.origin_path, index = False)
