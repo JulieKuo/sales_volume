@@ -1,6 +1,5 @@
 chart
-models/*/*
-!models/*/data.csv
+models/*
 output/*
-!output/.gitkeep
 *.exe
+*.bat
